@@ -1,0 +1,61 @@
+import { _decorator, Component, Texture2D, assetManager } from 'cc';
+const { ccclass } = _decorator;
+
+/**
+ * This is a Cocos Creator component that monitors performance metrics
+ * and sends memory usage reports to the parent window (React app).
+ * I don't want to commit it as two repositories, it will be too cumbersome.
+ * Thus, I put it here temporarily.
+ */
+
+@ccclass('PerformanceMonitor')
+export class PerformanceMonitor extends Component {
+  private _timer = 0;
+
+  start() {
+    console.log('[PerformanceMonitor] Started.');
+    console.log('window === globalThis?', window === globalThis);
+    console.log('window.parent:', window.parent);
+    console.log('window.top:', window.top);
+  }
+
+  update(deltaTime: number) {
+    this._timer += deltaTime;
+    if (this._timer >= 3) {
+      this._timer = 0;
+      this.reportMemoryUsage();
+    }
+  }
+
+  private reportMemoryUsage() {
+    const perf = (performance as any).memory;
+    const jsHeap = perf ? perf.usedJSHeapSize : 0;
+    const textureMem = this.estimateTextureMemory();
+
+    const data = {
+      type: 'MEMORY_REPORT',
+      jsHeap,
+      textureMem
+    };
+
+    // Post message to parent (React)
+    console.log('[PerformanceMonitor] Sending message to parent...');
+    window.parent.postMessage(data, '*');
+
+    // Local log
+    console.log(
+      `[Memory] JS Heap: ${(jsHeap / 1024 / 1024).toFixed(2)} MB | ` +
+      `Textures: ${(textureMem / 1024 / 1024).toFixed(2)} MB`
+    );
+  }
+
+  private estimateTextureMemory(): number {
+    let total = 0;
+    assetManager.assets.forEach((asset: any) => {
+      if (asset instanceof Texture2D) {
+        total += asset.width * asset.height * 4; // 每像素4字节
+      }
+    });
+    return total;
+  }
+}

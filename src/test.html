@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Iframe Page</title>
+</head>
+<body>
+<h1>Iframe Page</h1>
+<script>
+    console.log('[Iframe] Page loaded');
+
+    // 每3秒发一次
+    setInterval(() => {
+        const msg = {
+            type: 'TEST_MSG',
+            text: 'Hello from iframe',
+            time: new Date().toISOString(),
+        };
+        console.log('[Iframe] Sending:', msg);
+        window.parent.postMessage(msg, 'http://localhost:5173');
+    }, 3000);
+</script>
+</body>
+</html>
